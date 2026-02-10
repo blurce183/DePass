@@ -19,7 +19,7 @@ DePass is a lightweight, high-security password generator that runs entirely in 
 
 ## 🔐 Security & Privacy
 
-DePass is designed to be a "key factory." We recommend using it in combination with a professional password manager like **Proton Pass** or **Bitwarden**. 
+DePass is designed to be a "key factory." I recommend using it in combination with a professional password manager like **Proton Pass** or **Bitwarden**. 
 - Generate your secure password here.
 - Copy it to your vault.
 - Close the tab to wipe the session history.
