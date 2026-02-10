@@ -4,7 +4,6 @@ DePass is a lightweight, high-security password generator that runs entirely in 
 
 ## 🔑 Key Features
 
-- **High Entropy:** Uses `window.crypto` for generating truly random values based on hardware noise.
 - **Privacy First:** No data is sent to any server. Everything happens locally on your device.
 - **Session History:** Keeps track of your last generated passwords during the current session.
 - **Zero Dependencies:** Pure HTML, CSS, and JavaScript. No external libraries or trackers.
