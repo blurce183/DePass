@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DePass - Password Generator</title>
+    <style>
+        :root {
+            --blue-num: #00d4ff; 
+            --blue-sym: #0066ff;
+            --bg: #050505; 
+            --card-bg: rgba(10, 12, 18, 0.98);
+            --text: #e0e6ed;
+        }
+
+        body, html {
+            height: 100%; margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        #canvas-bg { position: absolute; top: 0; left: 0; z-index: 0; }
+
+        .main-card {
+            position: relative; z-index: 10;
+            width: 480px; padding: 2.5rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--blue-sym); 
+            box-shadow: 0 0 20px rgba(0, 102, 255, 0.15);
+            border-radius: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem; margin: 0;
+            background: linear-gradient(135deg, #fff 40%, var(--blue-sym) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-weight: 900; letter-spacing: -2px;
+        }
+
+        .subtitle {
+            color: #334155; font-size: 0.65rem; margin-bottom: 2rem;
+            letter-spacing: 5px; text-transform: uppercase; font-weight: 700;
+        }
+
+        .output-container {
+            background: rgba(0, 0, 0, 0.6); 
+            padding: 1.2rem; border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-height: 60px; margin-bottom: 1.5rem;
+            display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
+            font-family: 'JetBrains Mono', monospace; font-size: 1.4rem;
+            word-break: break-all;
+        }
+
+        .char-num { color: var(--blue-num); }
+        .char-sym { color: var(--blue-sym); font-weight: bold; }
+
+        .options-flex { display: flex; gap: 12px; margin-bottom: 1.5rem; }
+
+        .toggle-btn {
+            flex: 1; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px; border-radius: 15px;
+            color: #475569; cursor: pointer; font-size: 0.75rem;
+            font-weight: 800; transition: 0.2s; text-transform: uppercase;
+        }
+
+        .toggle-btn.active {
+            background: rgba(0, 119, 255, 0.1); border-color: var(--blue-sym);
+            color: var(--blue-sym);
+        }
+
+        .slider-section { text-align: left; margin-bottom: 1.5rem; }
+        .slider-info { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 8px; font-weight: 800; color: #475569; }
+
+        input[type=range] { width: 100%; -webkit-appearance: none; background: #0f172a; height: 4px; border-radius: 10px; outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; 
+            background: #fff; border-radius: 50%; cursor: pointer;
+        }
+
+        .btn-group { display: flex; gap: 12px; margin-bottom: 1rem; }
+        .btn {
+            flex: 1; padding: 1rem; border-radius: 18px; border: none;
+            font-weight: 900; cursor: pointer; transition: 0.2s;
+            font-family: inherit; text-transform: uppercase; font-size: 0.8rem;
+        }
+        .btn-main { background: var(--blue-sym); color: #fff; }
+        .btn-copy { background: transparent; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+
+        #history-toggle-container { 
+            display: none; 
+            cursor: pointer; padding: 10px; justify-content: center; opacity: 0.5; transition: 0.3s;
+        }
+        #history-toggle-container:hover { opacity: 1; }
+        .arrow { width: 10px; height: 10px; border-bottom: 2px solid #fff; border-right: 2px solid #fff; transform: rotate(45deg); transition: 0.3s; }
+        .arrow.open { transform: rotate(-135deg); }
+
+        .history-content { max-height: 0; overflow: hidden; transition: max-height 0.3s; text-align: left; }
+        .history-content.show { max-height: 180px; padding-top: 10px; }
+
+        .history-item {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #64748b;
+            background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 12px;
+            margin-bottom: 8px; cursor: pointer; overflow: hidden; text-overflow: ellipsis;
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .history-item:hover { border-color: var(--blue-sym); color: #fff; background: rgba(0, 102, 255, 0.1); }
+
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #fff; color: #000; padding: 10px 25px; border-radius: 100px;
+            font-weight: 700; font-size: 0.85rem; transition: 0.4s; z-index: 1000;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas-bg"></canvas>
+
+<div class="main-card">
+    <h1>DePass</h1>
+    <div class="subtitle">Secure Vault Access</div>
+
+    <div id="output" class="output-container"></div>
+
+    <div class="options-flex">
+        <button class="toggle-btn active" id="opt-num" onclick="toggleOption('opt-num')">Numbers</button>
+        <button class="toggle-btn active" id="opt-sym" onclick="toggleOption('opt-sym')">Symbols</button>
+    </div>
+
+    <div class="slider-section">
+        <div class="slider-info">
+            <span>CHARACTERS</span>
+            <span id="len-label" style="color:var(--blue-num)">24</span>
+        </div>
+        <input type="range" id="slider" min="8" max="64" value="24" oninput="updateUI()">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-main" onclick="handleGenerateClick()">Generate</button>
+        <button class="btn btn-copy" onclick="copyCurrent()">Copy</button>
+    </div>
+
+    <div id="history-toggle-container" onclick="toggleHistory()">
+        <div class="arrow" id="hist-arrow"></div>
+    </div>
+
+    <div class="history-content" id="hist-content">
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<div id="toast">Copied to clipboard</div>
+
+<script>
+    /* © 2026 Blurce183. All Rights Reserved. This code cannot be modified or redistributed. */
+    let audioCtx;
+    function playBeep(f, d, vol = 0.15) {
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        
+        g.gain.setValueAtTime(vol, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + d);
+        
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + d);
+    }
+
+    const canvas = document.getElementById('canvas-bg');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function initStars() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        stars = Array.from({length: 180}, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            size: Math.random() * 1.4, opacity: Math.random(),
+            fade: Math.random() * 0.005 + 0.002, vx: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.1
+        }));
+    }
+
+    function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for(let s of stars) {
+            s.x += s.vx; s.y += s.vy; s.opacity += s.fade;
+            if(s.opacity > 1 || s.opacity < 0.1) s.fade *= -1;
+            if(s.x < 0) s.x = canvas.width; if(s.x > canvas.width) s.x = 0;
+            if(s.y < 0) s.y = canvas.height; if(s.y > canvas.height) s.y = 0;
+            ctx.fillStyle = `rgba(0, 102, 255, ${s.opacity * 0.3})`;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+        }
+        requestAnimationFrame(animateStars);
+    }
+
+    let rawPwd = "";
+    let history = [];
+    const options = { num: true, sym: true };
+
+    function toggleOption(id) {
+        playBeep(450, 0.15, 0.18);
+        document.getElementById(id).classList.toggle('active');
+        options[id.split('-')[1]] = document.getElementById(id).classList.contains('active');
+        handleGenerateClick();
+    }
+
+    function toggleHistory() {
+        document.getElementById('hist-content').classList.toggle('show');
+        document.getElementById('hist-arrow').classList.toggle('open');
+        playBeep(350, 0.15, 0.15);
+    }
+
+    function updateUI() {
+        document.getElementById('len-label').innerText = document.getElementById('slider').value;
+        playBeep(500 + (parseInt(document.getElementById('slider').value) * 6), 0.04, 0.12);
+        generate(false);
+    }
+
+    function handleGenerateClick() {
+        if(rawPwd) updateHistory(rawPwd);
+        generate(true);
+    }
+
+    function generate(isManual) {
+        const len = parseInt(document.getElementById('slider').value);
+        const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+        const nums = "23456789";
+        const syms = "!@#$%&*-_=+";
+        let pool = chars.split('');
+        if(options.num) pool = pool.concat(nums.split(''));
+        if(options.sym) pool = pool.concat(syms.split(''));
+
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = window.crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+
+        let pwd = ""; let html = ""; let lastChar = "";
+        const entropyBuffer = new Uint32Array(len);
+        window.crypto.getRandomValues(entropyBuffer);
+
+        for(let i=0; i<len; i++) {
+            let nextChar = pool[entropyBuffer[i] % pool.length];
+            if(nextChar === lastChar) nextChar = pool[(entropyBuffer[i] + 1) % pool.length];
+            pwd += nextChar;
+            if(nums.includes(nextChar)) html += `<span class="char-num">${nextChar}</span>`;
+            else if(syms.includes(nextChar)) html += `<span class="char-sym">${nextChar}</span>`;
+            else html += nextChar;
+            lastChar = nextChar;
+        }
+        rawPwd = pwd;
+        document.getElementById('output').innerHTML = html;
+        if(isManual) playBeep(850, 0.08, 0.15);
+    }
+
+    function updateHistory(pwd) {
+        if(history.includes(pwd)) return;
+        history.unshift(pwd);
+        if(history.length > 3) history.pop();
+
+        const toggleContainer = document.getElementById('history-toggle-container');
+        if(history.length > 0) {
+            toggleContainer.style.display = 'flex';
+        }
+
+        const list = document.getElementById('history-list');
+        list.innerHTML = history.map(p => `
+            <div class="history-item" onclick="copyToClipboard('${p}')">
+                ${p}
+            </div>
+        `).join('');
+    }
+
+    function copyCurrent() { copyToClipboard(rawPwd); }
+
+    function copyToClipboard(text) {
+        if (!text) return;
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        playBeep(1200, 0.2, 0.2);
+        const t = document.getElementById('toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    window.onresize = initStars;
+    initStars(); animateStars(); 
+    generate(false);
+</script>
+</body>
+</html>
