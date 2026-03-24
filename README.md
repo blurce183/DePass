@@ -14,4 +14,4 @@ Copyright (c) 2026 Blurce183. All Rights Reserved.
 This project is proprietary. You are not allowed to modify, redistribute, or use this code for commercial purposes without explicit permission. See the `LICENSE` file for more details.
 
 ---
-*Created with focus on privacy and clean design.*
+*Randomly made this for fun.*
